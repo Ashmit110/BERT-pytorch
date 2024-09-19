@@ -2,6 +2,7 @@ import torch.nn as nn
 
 from .transformer import TransformerBlock
 from .embedding import BERTEmbedding
+from classifier_head import ClassifierHead
 
 
 class BERT(nn.Module):
@@ -32,6 +33,8 @@ class BERT(nn.Module):
         # multi-layers transformer blocks, deep network
         self.transformer_blocks = nn.ModuleList(
             [TransformerBlock(hidden, attn_heads, hidden * 4, dropout) for _ in range(n_layers)])
+        
+        self.classifier=ClassifierHead(self.hidden) # the second dimention should be that of the word embedding
 
     def forward(self, x, segment_info):
         # attention masking for padded token
@@ -44,5 +47,17 @@ class BERT(nn.Module):
         # running over multiple transformer blocks
         for transformer in self.transformer_blocks:
             x = transformer.forward(x, mask)
+        
+        
+        '''-----------------ashmit entered code--------------------------------------'''    
+        # Assuming `bert_output` is the output from the BERT model (shape: [B, T, E])
+        # You can extract the [CLS] token embedding as follows:
+        cls_token_embedding = x[:, 0, :]  # Shape becomes [B, E]
+        
 
+        # Forward pass through the classifier head
+        output = self.classifier(cls_token_embedding)
+
+        # Output shape will be [B, 1], representing the probability for each sample
+        '''ashmit left the code'''
         return x
